@@ -1,18 +1,57 @@
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { HiMenuAlt3, HiOutlineArrowRight, HiX } from "react-icons/hi";
 import { navLinks } from "../data/portfolio";
+
+const projectNavLinks = [
+  {
+    label: "Intro",
+    href: "#project-top",
+  },
+  {
+    label: "Overview",
+    href: "#project-overview",
+  },
+  {
+    label: "Features",
+    href: "#project-features",
+  },
+  {
+    label: "Challenges",
+    href: "#project-challenges",
+  },
+  {
+    label: "Skills",
+    href: "#project-skills",
+  },
+  {
+    label: "Impact",
+    href: "#project-impact",
+  },
+  {
+    label: "Social",
+    href: "#project-social-proof",
+  },
+];
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const { scrollY } = useScroll();
+  const location = useLocation();
+
+  const isProjectPage = location.pathname.startsWith("/projects/");
+
+  const currentNavLinks = useMemo(() => {
+    return isProjectPage ? projectNavLinks : navLinks;
+  }, [isProjectPage]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 40);
 
-    if (latest < 160) {
+    if (!isProjectPage && latest < 160) {
       setActiveSection("");
     }
   });
@@ -21,24 +60,34 @@ export function Navbar() {
     const updateActiveSection = () => {
       const scrollPosition = window.scrollY + 140;
 
-      if (window.scrollY < 160) {
+      if (!isProjectPage && window.scrollY < 160) {
         setActiveSection("");
         return;
       }
 
-      const contactSection = document.querySelector(
-        "#contact",
-      ) as HTMLElement | null;
+      if (!isProjectPage) {
+        const contactSection = document.querySelector(
+          "#contact",
+        ) as HTMLElement | null;
 
-      if (contactSection && scrollPosition >= contactSection.offsetTop - 120) {
-        setActiveSection("");
-        return;
+        if (
+          contactSection &&
+          scrollPosition >= contactSection.offsetTop - 120
+        ) {
+          setActiveSection("");
+          return;
+        }
       }
 
-      let currentSection = "";
+      let currentSection = isProjectPage ? "#project-top" : "";
 
-      navLinks.forEach((link) => {
-        if (link.href === "#home" || link.href === "#contact") return;
+      currentNavLinks.forEach((link) => {
+        if (
+          !isProjectPage &&
+          (link.href === "#home" || link.href === "#contact")
+        ) {
+          return;
+        }
 
         const section = document.querySelector(link.href) as HTMLElement | null;
 
@@ -59,7 +108,7 @@ export function Navbar() {
       window.removeEventListener("scroll", updateActiveSection);
       window.removeEventListener("resize", updateActiveSection);
     };
-  }, []);
+  }, [isProjectPage, location.pathname, currentNavLinks]);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -70,7 +119,7 @@ export function Navbar() {
   }, [menuOpen]);
 
   const handleNavClick = (href: string) => {
-    if (href === "#home" || href === "#contact") {
+    if (!isProjectPage && (href === "#home" || href === "#contact")) {
       setActiveSection("");
     } else {
       setActiveSection(href);
@@ -78,6 +127,8 @@ export function Navbar() {
 
     setMenuOpen(false);
   };
+
+  const contactHref = isProjectPage ? "/#contact" : "#contact";
 
   return (
     <motion.header
@@ -87,18 +138,21 @@ export function Navbar() {
       transition={{ duration: 0.45 }}
     >
       <nav className="navbar__inner container">
-        <a
-          href="#home"
+        <Link
+          to="/"
           className="navbar__logo"
-          onClick={() => handleNavClick("#home")}
+          onClick={() => {
+            setActiveSection("");
+            setMenuOpen(false);
+          }}
         >
           <span className="navbar__logo-text">
             Riya <span>Goyal</span>
           </span>
-        </a>
+        </Link>
 
         <ul className="navbar__links">
-          {navLinks.map((link) => (
+          {currentNavLinks.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
@@ -113,14 +167,17 @@ export function Navbar() {
           ))}
         </ul>
 
-        <a
-          href="#contact"
+        <Link
+          to={isProjectPage ? "/#contact" : "#contact"}
           className="navbar__cta"
-          onClick={() => handleNavClick("#contact")}
+          onClick={() => {
+            setActiveSection("");
+            setMenuOpen(false);
+          }}
         >
           <span>Contact</span>
           <HiOutlineArrowRight />
-        </a>
+        </Link>
 
         <button
           type="button"
@@ -144,7 +201,7 @@ export function Navbar() {
       >
         <div className="container">
           <ul>
-            {navLinks.map((link) => (
+            {currentNavLinks.map((link) => (
               <li key={link.href}>
                 <a
                   href={link.href}
@@ -161,14 +218,17 @@ export function Navbar() {
             ))}
 
             <li>
-              <a
-                href="#contact"
+              <Link
+                to={isProjectPage ? "/#contact" : "#contact"}
                 className="navbar__mobile-cta"
-                onClick={() => handleNavClick("#contact")}
+                onClick={() => {
+                  setActiveSection("");
+                  setMenuOpen(false);
+                }}
               >
                 <span>Contact</span>
                 <HiOutlineArrowRight />
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
